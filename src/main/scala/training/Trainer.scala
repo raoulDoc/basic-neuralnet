@@ -5,13 +5,14 @@ import core.NeuralNetwork
 import data.DataSet
 
 import scala.collection.SeqView
+import scala.util.Random
 
 object Trainer {
 
     def train(net: NeuralNetwork, dataSet: DataSet, epochs: Int): Unit = {
 
         for (epoch <- 1 to epochs) {
-            val trainingDataSet = dataSet.trainingInput zip dataSet.trainingOutput
+            val trainingDataSet = Random.shuffle(dataSet.trainingInput zip dataSet.trainingOutput)
             for (((inputVector, targetOutputs), index) <- trainingDataSet.view.zipWithIndex) {
 
                 val actualOutputs = net.feedForward(inputVector)
