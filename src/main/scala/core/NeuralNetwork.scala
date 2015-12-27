@@ -31,12 +31,9 @@ class NeuralNetwork(val inputLayer: Input,
     def calculateOutputsErrors(actualOutputs: DenseVector[Double],
                                targetOutputs: DenseVector[Double]): DenseVector[Double] = {
 
-        // TODO: would love a zip
-        val errorArray = (0 until outputLayer.size).map( k => {
-            val a = actualOutputs(k)
-            val t = targetOutputs(k)
-            a * (1 - a) * (t - a)
-        }).toArray
+        val errorArray = (actualOutputs.toArray zip targetOutputs.toArray).map {
+            case(a, t) => a * (1 - a) * (t - a)
+        }
 
         DenseVector[Double](errorArray)
     }
