@@ -1,9 +1,9 @@
 package core
 
-import breeze.linalg.{DenseMatrix, DenseVector}
-
+/**
+  * Created by raoul-gabrielurma on 28/12/2015.
+  */
 trait Layer {
     def getNumberOfUnits(): Int
-    def updateWeights(newWeights: DenseMatrix[Double])
-    def updateBiases(newBiases: DenseVector[Double]): Unit
+    def getOutputAtIndex(index: Int) : Double
 }

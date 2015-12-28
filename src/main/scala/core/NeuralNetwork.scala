@@ -5,7 +5,7 @@ import breeze.linalg.{DenseMatrix, DenseVector}
 import scala.language.postfixOps
 
 
-class NeuralNetwork(val inputLayer: Input,
+class NeuralNetwork(val inputLayer: InputLayer,
                     val hiddenLayer: HiddenLayer,
                     val outputLayer: OutputLayer,
                     val learningRate: Double,
@@ -50,22 +50,29 @@ class NeuralNetwork(val inputLayer: Input,
         DenseVector[Double](hiddenErrorArray)
     }
 
-    private def updateOutputsWeights(deltaOutputsErrors: DenseVector[Double]): Unit = {
-        //TODO: better way of doing this
-        val newWeights = DenseMatrix.zeros[Double](hiddenLayer.size, outputLayer.size)
+    private def updateWeights(fromLayer: Layer, toLayer: MutableLayer, deltas: DenseVector[Double]) : Unit = {
+        val rows = fromLayer.getNumberOfUnits
+        val cols = toLayer.getNumberOfUnits
 
-        (0 until outputLayer.size) map { j =>
-            (0 until hiddenLayer.size) map { i => {
-                val weight = outputLayer.weights(i, j)
-                val deltaWeight = learningRate * deltaOutputsErrors(j) * hiddenLayer.outputs(i)
-                newWeights(i, j) = weight + deltaWeight
-            }
-            }
-        }
-        outputLayer.updateWeights(newWeights)
+        val newWeightsArray =
+            (0 until cols).flatMap(j =>
+                (0 until rows).map(i => {
+                    val weight = toLayer.getWeightAtIndex(i, j)
+                    val deltaWeight = learningRate * deltas (j) * fromLayer.getOutputAtIndex(i)
+                    weight + deltaWeight
+                }
+                )
+            ).toArray
+
+        val newWeightsMatrix = new DenseMatrix(rows, cols, newWeightsArray)
+        toLayer.updateWeights(newWeightsMatrix)
     }
 
-    private def updateOutputBiasFor(layer: Layer, deltaErrors: DenseVector[Double]): Unit = {
+    private def updateOutputsWeights(deltaOutputsErrors: DenseVector[Double]): Unit = {
+        updateWeights(fromLayer = hiddenLayer, toLayer = outputLayer, deltaOutputsErrors)
+    }
+
+    private def updateOutputBiasFor(layer: MutableLayer, deltaErrors: DenseVector[Double]): Unit = {
         val newBiases = (0 until layer.getNumberOfUnits)
             .map(j => gammaBias * deltaErrors(j))
             .toArray
@@ -78,19 +85,7 @@ class NeuralNetwork(val inputLayer: Input,
     }
 
     private def updateHiddenWeights(deltaHiddenErrors: DenseVector[Double]): Unit = {
-        //TODO: better way of doing this
-        val newWeights = DenseMatrix.zeros[Double](inputLayer.size, hiddenLayer.size)
-
-        (0 until hiddenLayer.size) map { j =>
-            (0 until inputLayer.size) map { i => {
-                val weight = hiddenLayer.weights(i, j)
-                val deltaWeight = learningRate * deltaHiddenErrors(j) * inputLayer.outputs(i)
-                newWeights(i, j) = weight + deltaWeight
-            }
-            }
-        }
-
-        hiddenLayer.updateWeights(newWeights)
+        updateWeights(fromLayer = inputLayer, toLayer = hiddenLayer, deltaHiddenErrors)
     }
 
     private def updateHiddenBias(deltaErrors: DenseVector[Double]): Unit = {
@@ -118,7 +113,7 @@ object NeuralNetwork {
               output: Int,
               learningRate: Double = 3.0,
               gammaBias: Double = 1.0): NeuralNetwork = {
-        val inputLayer = new Input(input)
+        val inputLayer = new InputLayer(input)
         val hiddenLayer = new HiddenLayer(hidden, inputLayer)
         val outpoutLayer = new OutputLayer(output, hiddenLayer)
 
