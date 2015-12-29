@@ -26,14 +26,17 @@ object IrisDataSetLoader extends DataSetLoader {
 
             }).toList
 
+        splitData(trainingSplit, data)
+    }
+
+    private def splitData(trainingSplit: Double, data: Seq[(DenseVector[Double], DenseVector[Double])]): DataSet = {
         val mixedData = Random.shuffle(data)
 
-        val splitIndex : Int = (data.size * trainingSplit).toInt
+        val splitIndex: Int = (data.size * trainingSplit).toInt
 
         val (trainingInput, trainingOutput) = mixedData.slice(0, splitIndex).unzip
         val (testingInput, testingOutput) = mixedData.slice(splitIndex, data.size).unzip
 
         DataSet(trainingInput, trainingOutput, testingInput, testingOutput)
     }
-
 }
